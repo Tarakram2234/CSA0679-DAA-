@@ -1,0 +1,105 @@
+Write a program to perform MST using greedy techniques.
+#include <stdio.h>
+#include <stdlib.h>
+
+#define MAX_NODES 10000
+#define MAX_EDGES 100000
+
+int parent[MAX_NODES];
+int rank[MAX_NODES];
+
+struct Edge {
+    int src, dest, weight;
+};
+
+struct Graph {
+    int V, E;
+    struct Edge* edge;
+};
+
+struct Graph* create_graph(int V, int E) {
+    struct Graph* graph = (struct Graph*) malloc(sizeof(struct Graph));
+    graph->V = V;
+    graph->E = E;
+    graph->edge = (struct Edge*) malloc(sizeof(struct Edge) * E);
+    return graph;
+}
+
+int find(int i) {
+    if (parent[i] == i) {
+        return i;
+    }
+    return parent[i] = find(parent[i]);
+}
+
+void union_set(int x, int y) {
+    int x_root = find(x);
+    int y_root = find(y);
+
+    if (rank[x_root] < rank[y_root]) {
+        parent[x_root] = y_root;
+    } else if (rank[x_root] > rank[y_root]) {
+        parent[y_root] = x_root;
+    } else {
+        parent[y_root] = x_root;
+        rank[x_root]++;
+    }
+}
+
+void kruskal_mst(struct Graph* graph) {
+    int i, j, x, y;
+    struct Edge next_edge;
+
+    for (i = 0; i < graph->V; i++) {
+        parent[i] = i;
+        rank[i] = 0;
+    }
+
+    qsort(graph->edge, graph->E, sizeof(graph->edge[0]), 
+        [](const void* a, const void* b) -> int {
+            struct Edge* a_edge = (struct Edge*) a;
+            struct Edge* b_edge = (struct Edge*) b;
+            return a_edge->weight - b_edge->weight;
+        }
+    );
+
+    for (i = 0, j = 0; i < graph->V - 1 && j < graph->E; j++) {
+        next_edge = graph->edge[j];
+        x = find(next_edge.src);
+        y = find(next_edge.dest);
+
+        if (x != y) {
+            union_set(x, y);
+            printf("(%d, %d) -> %d\n", next_edge.src, next_edge.dest, next_edge.weight);
+            i++;
+        }
+    }
+}
+
+int main() {
+    int V, E;
+    printf("Enter number of vertices: ");
+    scanf("%d", &V);
+    printf("Enter number of edges: ");
+    scanf("%d", &E);
+
+    struct Graph* graph = create_graph(V, E);
+
+    int i;
+    for (i = 0; i < E; i++) {
+        int src, dest, weight;
+        printf("Enter edge %d source: ", i + 1);
+        scanf("%d", &src);
+        printf("Enter edge %d destination: ", i + 1);
+        scanf("%d", &dest);
+        printf("Enter edge %d weight: ", i + 1);
+        scanf("%d", &weight);
+        graph->edge[i].src = src;
+        graph->edge[i].dest = dest;
+        graph->edge[i].weight = weight;
+    }
+
+    kruskal_mst(graph);
+
+    return 0;
+}
